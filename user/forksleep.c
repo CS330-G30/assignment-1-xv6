@@ -27,6 +27,12 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if ((n == 0 && argv[2][0] != '0') || (m == 0 && argv[1][0] != '0'))
+	{
+		printf("Invalid arguments\n");
+		exit(1);
+	}
+
 	if (fork() == 0)
 	{
 		if (n == 0)

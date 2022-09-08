@@ -2,6 +2,8 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
+#define NULL ((void *)0)
+
 int main(int argc, char *argv[])
 {
 	if (argc != 3)
@@ -12,7 +14,24 @@ int main(int argc, char *argv[])
 
 	int n = atoi(argv[1]);
 	int x = atoi(argv[2]);
-	int p = 0;
+
+	if (x == 0)
+	{
+		if (argv[2][0] == '-')
+		{
+			x = -1 * atoi((argv[2]) + 1);
+			if (x == 0)
+			{
+				printf("Invalid argument\n");
+				exit(1);
+			}
+		}
+		else if (argv[2][0] != '0' || strlen(argv[2]) != 1)
+		{
+			printf("Invalid arguments\n");
+			exit(1);
+		}
+	}
 
 	if (n <= 0)
 	{
@@ -20,34 +39,35 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	// make FILE_NAME a global variable
-	char *FILE_NAME = "pipeline.txt";
+	int fd[2];
 
-	// clear the file
-	int fd = open(FILE_NAME, 514);
-	write(fd, &p, sizeof(int));
-	close(fd);
+	if (pipe(fd) < 0)
+	{
+		printf("pipe failed\n");
+		exit(1);
+	}
+
+	write(fd[1], &x, sizeof(x));
 
 	// create a pipeline of n processes
 	for (int i = 0; i < n; i++)
 	{
 		if (fork() == 0)
 		{
-			fd = open(FILE_NAME, 2);
-			read(fd, &x, sizeof(int));
-			close(fd);
+			read(fd[0], &x, sizeof(x));
 
 			x += getpid();
-			printf("%d: %d \n", getpid(), x);
+			printf("%d: %d\n", getpid(), x);
 
-			// overwrite the file with the new value
-			fd = open(FILE_NAME, 2);
-			write(fd, &x, sizeof(int));
-			close(fd);
+			write(fd[1], &x, sizeof(x));
 
 			exit(0);
 		}
-		wait(&p);
+		wait(NULL);
 	}
+
+	close(fd[0]);
+	close(fd[1]);
+
 	exit(0);
 }

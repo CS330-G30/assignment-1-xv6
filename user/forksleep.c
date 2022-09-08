@@ -2,6 +2,8 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
+#define NULL ((void *)0)
+
 int main(int argc, char *argv[])
 {
 	if (argc != 3)
@@ -12,6 +14,18 @@ int main(int argc, char *argv[])
 
 	int m = atoi(argv[1]);
 	int n = atoi(argv[2]);
+
+	if (m <= 0)
+	{
+		printf("Invalid arguments\n");
+		exit(1);
+	}
+
+	if (n != 0 && n != 1)
+	{
+		printf("Invalid arguments\n");
+		exit(1);
+	}
 
 	if (fork() == 0)
 	{
@@ -29,6 +43,7 @@ int main(int argc, char *argv[])
 			sleep(m);
 		}
 		printf("%d: Parent.\n", getpid());
+		wait(NULL);
 		exit(0);
 	}
 }

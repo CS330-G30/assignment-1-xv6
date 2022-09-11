@@ -24,8 +24,9 @@ sys_getpid(void)
 }
 uint64
 sys_getppid(void){
-  if((myproc()->parent)->pid) return ((myproc()->parent)->pid) ;
-  else return -1;
+  if((myproc()->parent)->pid < 0) return -1;
+  else return ((myproc()->parent)->pid) ;
+  
 }
 
 uint64

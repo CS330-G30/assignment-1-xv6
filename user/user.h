@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int getppid(void);
 int yield(void);
+int getpa(char *);
 
 // ulib.c
 int stat(const char *, struct stat *);

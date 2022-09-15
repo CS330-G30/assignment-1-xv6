@@ -113,3 +113,13 @@ sys_yield(void)
   yield();
   return 0;
 }
+
+uint64
+sys_getpa(void)
+{
+  uint64 viradd;
+  if (argaddr(0, &viradd) < 0)
+    return -1;
+
+  return walkaddr(myproc()->pagetable, viradd) + (viradd & (PGSIZE - 1));
+}

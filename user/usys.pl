@@ -37,4 +37,5 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("getppid");
-entry("yield")
+entry("yield");
+entry("getpa");

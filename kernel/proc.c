@@ -501,6 +501,59 @@ int wait(uint64 addr)
   }
 }
 
+// Wait for a child process with pid to exit and return its pid.
+// Return -1 if this process has no children or parent is not calling.
+int waitpid(int pid, uint64 addr)
+{
+  struct proc *np;
+  int ispresent;
+  struct proc *p = myproc();
+
+  acquire(&wait_lock);
+
+  for (;;)
+  {
+    // Scan through table looking for exited children.
+    ispresent = 0;
+    for (np = proc; np < &proc[NPROC]; np++)
+    {
+      if (np->parent == p && np->pid == pid)
+      {
+        // make sure the child isn't still in exit() or swtch().
+        acquire(&np->lock);
+
+        ispresent = 1;
+        if (np->state == ZOMBIE && np->pid == pid)
+        {
+          // Found one.
+          if (addr != 0 && copyout(p->pagetable, addr, (char *)&np->xstate,
+                                   sizeof(np->xstate)) < 0)
+          {
+            release(&np->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          freeproc(np);
+          release(&np->lock);
+          release(&wait_lock);
+          return pid;
+        }
+        release(&np->lock);
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if (!ispresent || p->killed)
+    {
+      release(&wait_lock);
+      return -1;
+    }
+
+    // Wait for a child to exit.
+    sleep(p, &wait_lock); // DOC: wait-sleep
+  }
+}
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:

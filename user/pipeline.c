@@ -55,11 +55,13 @@ int main(int argc, char *argv[])
 		if (fork() == 0)
 		{
 			read(fd[0], &x, sizeof(x));
+			close(fd[0]);
 
 			x += getpid();
 			printf("%d: %d\n", getpid(), x);
 
 			write(fd[1], &x, sizeof(x));
+			close(fd[1]);
 
 			exit(0);
 		}

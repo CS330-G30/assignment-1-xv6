@@ -22,6 +22,7 @@ sys_getpid(void)
 {
   return myproc()->pid;
 }
+
 uint64
 sys_getppid(void)
 {
@@ -104,4 +105,30 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_yield(void)
+{
+  yield();
+  return 0;
+}
+
+uint64
+sys_getpa(void)
+{
+  uint64 viradd;
+  if (argaddr(0, &viradd) < 0)
+    return -1;
+
+  return walkaddr(myproc()->pagetable, viradd) + (viradd & (PGSIZE - 1));
+}
+
+uint64
+sys_forkf(void)
+{
+  uint64 f = 0;
+  if (argaddr(0, &f) < 0)
+    return -1;
+  return forkf((int (*)(void))f);
 }

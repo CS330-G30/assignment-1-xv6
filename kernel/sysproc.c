@@ -132,3 +132,20 @@ sys_forkf(void)
     return -1;
   return forkf((int (*)(void))f);
 }
+
+uint64
+sys_waitpid(void)
+{
+  int pid;
+  uint64 status;
+
+  if (argint(0, &pid) < 0)
+    return -1;
+  if (argaddr(1, &status) < 0)
+    return -1;
+
+  if (pid < 0)
+    return wait(status);
+
+  return waitpid(pid, status);
+}

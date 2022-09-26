@@ -126,6 +126,10 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  acquire(&tickslock);
+  p->ctime = ticks;
+  release(&tickslock);
+
   // Allocate a trapframe page.
   if ((p->trapframe = (struct trapframe *)kalloc()) == 0)
   {
@@ -171,6 +175,9 @@ freeproc(struct proc *p)
   p->chan = 0;
   p->killed = 0;
   p->xstate = 0;
+  p->ctime = 0;
+  p->etime = 0;
+  p->stime = 0;
   p->state = UNUSED;
 }
 
@@ -440,6 +447,10 @@ void exit(int status)
   p->xstate = status;
   p->state = ZOMBIE;
 
+  acquire(&tickslock);
+  p->etime += ticks - p->stime;
+  release(&tickslock);
+
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
@@ -581,6 +592,11 @@ void scheduler(void)
         // to release its lock and then reacquire it
         // before jumping back to us.
         p->state = RUNNING;
+
+        acquire(&tickslock);
+        p->stime = ticks;
+        release(&tickslock);
+
         c->proc = p;
         swtch(&c->context, &p->context);
 
@@ -669,6 +685,11 @@ void sleep(void *chan, struct spinlock *lk)
   // Go to sleep.
   p->chan = chan;
   p->state = SLEEPING;
+
+  acquire(&tickslock);
+  p->etime += ticks - p->stime;
+  p->stime = 0;
+  release(&tickslock);
 
   sched();
 
@@ -784,6 +805,67 @@ void procdump(void)
     else
       state = "???";
     printf("%d %s %s", p->pid, state, p->name);
+    printf("\n");
+  }
+}
+
+// Print all the processes in the system
+void ps(void)
+{
+  struct proc *p;
+  char *state;
+  int ppid, etime;
+
+  printf("\n");
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+
+    if (p->state == UNUSED)
+      continue;
+
+    acquire(&p->lock);
+
+    acquire(&tickslock);
+    etime = ticks - p->stime;
+    release(&tickslock);
+
+    if (p->state == SLEEPING)
+    {
+      state = "sleep";
+    }
+    else if (p->state == RUNNABLE)
+    {
+      state = "runnable";
+    }
+    else if (p->state == RUNNING)
+    {
+      state = "run";
+    }
+    else if (p->state == ZOMBIE)
+    {
+      state = "zombie";
+      etime = p->etime;
+    }
+    else
+    {
+      state = "???";
+    }
+
+    if (p->parent)
+    {
+      acquire(&p->parent->lock);
+      acquire(&wait_lock);
+      ppid = p->parent->pid;
+      release(&p->parent->lock);
+      release(&wait_lock);
+    }
+    else
+    {
+      ppid = -1;
+    }
+
+    printf("pid=%d, ppid=%d, state=%s, cmd=%s, ctime=%d, stime=%d, etime=%d, size=%p", p->pid, ppid, state, p->name, p->ctime, p->stime, etime, p->sz);
+    release(&p->lock);
     printf("\n");
   }
 }

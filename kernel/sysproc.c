@@ -123,3 +123,12 @@ sys_getpa(void)
 
   return walkaddr(myproc()->pagetable, viradd) + (viradd & (PGSIZE - 1));
 }
+
+uint64
+sys_forkf(void)
+{
+  uint64 f = 0;
+  if (argaddr(0, &f) < 0)
+    return -1;
+  return forkf((int (*)(void))f);
+}

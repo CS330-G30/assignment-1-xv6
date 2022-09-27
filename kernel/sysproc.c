@@ -26,10 +26,10 @@ sys_getpid(void)
 uint64
 sys_getppid(void)
 {
-  if ((myproc()->parent)->pid < 0)
-    return -1;
-  else
-    return ((myproc()->parent)->pid);
+  struct proc *p = myproc();
+  if (p->parent && p->parent->pid > 0)
+    return p->parent->pid;
+  return -1;
 }
 
 uint64

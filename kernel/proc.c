@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "procstat.h"
 
 struct cpu cpus[NCPU];
 
@@ -868,4 +869,90 @@ void ps(void)
     release(&p->lock);
     printf("\n");
   }
+}
+
+int pinfo(int pid, uint64 psaddr)
+{
+  struct procstat *ps = (struct procstat *)psaddr;
+  struct proc *p;
+  char *state;
+
+  if (pid == -1)
+  {
+    pid = myproc()->pid;
+  }
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      acquire(&p->lock);
+      if (p->state == UNUSED)
+        state = "unused";
+      else if (p->state == USED)
+        state = "used";
+      else if (p->state == SLEEPING)
+        state = "sleep";
+      else if (p->state == RUNNABLE)
+        state = "runnable";
+      else if (p->state == RUNNING)
+        state = "run";
+      else if (p->state == ZOMBIE)
+        state = "zombie";
+      else
+        state = "???";
+
+      // copy from kernel to user
+      if (ps != 0 && copyout(p->pagetable, (uint64)ps->command, p->name, sizeof(p->name)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (copyout(p->pagetable, (uint64)ps->state, state, sizeof(state)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (copyout(p->pagetable, (uint64)&ps->pid, (char *)&p->pid, sizeof(p->pid)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (copyout(p->pagetable, (uint64)&ps->size, (char *)&p->sz, sizeof(p->sz)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (p->parent && copyout(p->pagetable, (uint64)&ps->ppid, (char *)&p->parent->pid, sizeof(p->parent->pid)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (copyout(p->pagetable, (uint64)&ps->ctime, (char *)&p->ctime, sizeof(p->ctime)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+      if (copyout(p->pagetable, (uint64)&ps->stime, (char *)&p->stime, sizeof(p->stime)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      if (copyout(p->pagetable, (uint64)&ps->etime, (char *)&p->etime, sizeof(p->etime)) < 0)
+      {
+        release(&p->lock);
+        return -1;
+      }
+
+      release(&p->lock);
+      return 0;
+    }
+  }
+  return -1;
 }

@@ -29,6 +29,7 @@ int getpa(char *);
 int forkf(int (*f)(void));
 int waitpid(int, char *);
 int ps(void);
+int pinfo(int, void *);
 
 // ulib.c
 int stat(const char *, struct stat *);

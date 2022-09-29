@@ -8,6 +8,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct procstat;
 
 // bio.c
 void binit(void);
@@ -104,6 +105,10 @@ void yield(void);
 int either_copyout(int user_dst, uint64 dst, void *src, uint64 len);
 int either_copyin(void *dst, int user_src, uint64 src, uint64 len);
 void procdump(void);
+int forkf(int (*)(void));
+int waitpid(int, uint64);
+void ps(void);
+int pinfo(int, uint64);
 
 // swtch.S
 void swtch(struct context *, struct context *);
@@ -138,6 +143,7 @@ int argaddr(int, uint64 *);
 int fetchstr(uint64, char *, int);
 int fetchaddr(uint64, uint64 *);
 void syscall();
+int getppid(void);
 
 // trap.c
 extern uint ticks;

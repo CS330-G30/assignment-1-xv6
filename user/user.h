@@ -23,6 +23,13 @@ int getpid(void);
 char *sbrk(int);
 int sleep(int);
 int uptime(void);
+int getppid(void);
+int yield(void);
+int getpa(void *);
+int forkf(int (*f)(void));
+int waitpid(int, void *);
+int ps(void);
+int pinfo(int, void *);
 
 // ulib.c
 int stat(const char *, struct stat *);

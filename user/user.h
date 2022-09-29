@@ -25,9 +25,9 @@ int sleep(int);
 int uptime(void);
 int getppid(void);
 int yield(void);
-int getpa(char *);
+int getpa(void *);
 int forkf(int (*f)(void));
-int waitpid(int, char *);
+int waitpid(int, void *);
 int ps(void);
 int pinfo(int, void *);
 
